@@ -10,19 +10,17 @@ app.use(cors());
 app.use(express.json());
 
 /* --------------------------- Connect to MongoDB --------------------------- */
-mongoose
-  .connect(process.env.atlas_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("MongoDB connected successfully");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-    process.exit(1);
-  });
-
+const db_connection = async () => {
+  await mongoose
+    .connect(process.env.atlas_URL)
+    .then(() => {
+      console.log("MongoDB connected successfully");
+    })
+    .catch((error) => {
+      console.error("MongoDB connection error:", error);
+    });
+};
+db_connection();
 /* ------------------------ Error Handling  ----------------------- */
 app.use((err, req, res, next) => {
   console.error(err.stack);
