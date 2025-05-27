@@ -1,33 +1,26 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import { errorHandler } from "./src/middleware/errorHandllingMiddleware.js";
+import authRoutes from "./src/modules/Auth/auth.router.js";
+import userInfo from "./src/modules/profile/profile.router.js";
+import db_connection from "./DB/DB-connection.js";
 
-require("dotenv").config();
+dotenv.config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
 /* --------------------------- Connect to MongoDB --------------------------- */
-const db_connection = async () => {
-  await mongoose
-    .connect(process.env.atlas_URL)
-    .then(() => {
-      console.log("MongoDB connected successfully");
-    })
-    .catch((error) => {
-      console.error("MongoDB connection error:", error);
-    });
-};
 db_connection();
-/* ------------------------ Error Handling  ----------------------- */
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  res.status(statusCode).json({ error: message });
-});
+/* --------------------------------- Routes --------------------------------- */
+app.use("/api/auth", authRoutes);
+app.use("/api/userInfo", userInfo);
+
+/* ------------------------ Error Handling from middleWare  ----------------------- */
+app.use(errorHandler);
 
 /* ------------------------ 404 Not Found  ------------------------ */
 app.use((req, res) => {

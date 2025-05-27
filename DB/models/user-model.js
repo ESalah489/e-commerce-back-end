@@ -52,11 +52,6 @@ const userSchema = new Schema(
       default: false,
     },
 
-    passwordResetToken: {
-      type: String,
-      default: null,
-    },
-
     createdAt: {
       type: Date,
       default: Date.now,
