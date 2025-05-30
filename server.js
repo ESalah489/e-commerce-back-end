@@ -1,5 +1,4 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import { errorHandler } from "./src/middleware/errorHandllingMiddleware.js";
@@ -22,10 +21,10 @@ app.use("/api/userInfo", userInfo);
 /* ------------------------ Error Handling from middleWare  ----------------------- */
 app.use(errorHandler);
 
-/* ------------------------ 404 Not Found  ------------------------ */
-app.use((req, res) => {
-  res.status(404).json({ error: "Route Not Found" });
-});
+// /* ------------------------ 404 Not Found  ------------------------ */
+// app.use((req, res) => {
+//   res.status(404).json({ error: "Route Not Found" });
+// });
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "127.0.0.1";

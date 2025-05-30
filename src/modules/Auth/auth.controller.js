@@ -27,7 +27,6 @@ export const register = async (req, res, next) => {
     });
 
     await newUser.save();
-
     res
       .status(201)
       .json({ message: "User registered successfully", userId: newUser._id });
@@ -36,7 +35,6 @@ export const register = async (req, res, next) => {
       const messages = Object.values(error.errors).map((val) => val.message);
       return res.status(400).json({ errors: messages });
     }
-
     next(error);
   }
 };
