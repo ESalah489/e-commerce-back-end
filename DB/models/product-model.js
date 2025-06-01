@@ -58,5 +58,5 @@ const productSchema = new Schema({
     default: Date.now,
   },
 });
-
+productSchema.index({ title: 1, brand: 1 }, { unique: true });
 export default mongoose.model("Product", productSchema);
