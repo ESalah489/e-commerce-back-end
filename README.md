@@ -1,9 +1,9 @@
-# 🛠️ TreeNature
+## 🛠️ TreeNature
 
-# 🛒 E-Commerce Backend (Node.js)
+## 🛒 E-Commerce Backend (Node.js)
 
-A lightweight e-commerce backend built with **Node.js**, **Express**, and **MongoDB**.  
-Designed to showcase and manage plant-based products while offering a smooth and engaging user experience — fully integrated into our TreeNature. concept as part of the ITI Project.
+###A lightweight e-commerce backend built with **Node.js**, **Express**, and **MongoDB**.  
+###Designed to showcase and manage plant-based products while offering a smooth and engaging user experience — fully integrated into our TreeNature. concept as part of the ITI Project.
 ---
 
 ## 🔥 Features
