@@ -11,4 +11,5 @@ const cartSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Cart", cartSchema);
+const Cart = mongoose.model("Cart", cartSchema);
+export default Cart;
