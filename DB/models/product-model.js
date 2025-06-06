@@ -13,7 +13,7 @@ const productSchema = new Schema({
     required: [true, "Product description is required"],
     trim: true,
     minlength: [5, "Description must be at least 5 characters"],
-    maxlength: [150, "Description must not exceed 150 characters"],
+    maxlength: [350, "Description must not exceed 150 characters"],
   },
   price: {
     type: Number,
@@ -58,5 +58,5 @@ const productSchema = new Schema({
     default: Date.now,
   },
 });
-productSchema.index({title:1,brand:1},{unique:true});
+productSchema.index({ title: 1, brand: 1 }, { unique: true });
 export default mongoose.model("Product", productSchema);

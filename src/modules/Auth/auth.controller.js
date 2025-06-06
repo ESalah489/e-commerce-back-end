@@ -62,3 +62,17 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
+
+/* ---------------------------------- LogOut --------------------------------- */
+export const logout = async (req, res, next) => {
+  try {
+    const userId = req.user?._id || null;
+    console.log(userId);
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { isLoggedIn: false });
+    }
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    next(error);
+  }
+};

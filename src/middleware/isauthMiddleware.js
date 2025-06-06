@@ -1,15 +1,15 @@
-import User from "../../../DB/models/user-model.js";
+import User from "../../DB/models/user-model.js";
 import jwt from "jsonwebtoken";
 
 export const isAuth = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.headers.authorization;
     if (!token) {
       return res.status(403).json({ message: "Please provide token" });
     }
 
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(payload._id);
+    const user = await User.findById(payload.userId);
 
     if (!user) {
       return res.status(403).json({ message: "User not found" });
