@@ -9,6 +9,7 @@ import productRoutes from "./src/modules/product/product.router.js";
 import cartRoutes from "./src/modules/Cart/cart.router.js";
 import orderRoutes from "./src/modules/Order/order.router.js";
 import wishlistRoutes from "./src/modules/wishlist/wishlist.routes.js";
+import reviewRoutes from "./src/modules/Reviews/review.router.js"
 import db_connection from "./DB/DB-connection.js";
 
 dotenv.config();
@@ -23,6 +24,7 @@ db_connection();
 app.use("/api/auth", authRoutes);
 app.use("/api/userInfo", userInfo);
 app.use("/api/products",productRoutes)
+app.use("/api/reviews",reviewRoutes)
 /* ------------------------ Error Handling from middleWare  ----------------------- */
 app.use(errorHandler);
 

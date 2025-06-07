@@ -21,18 +21,15 @@ export const EditUserDataById = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-<<<<<<< HEAD
-    const { username, email, password, phoneNumbers, addresses, age } =
-      req.body;
+    // const { username, email, password, phoneNumbers, addresses, age } =
+    //   req.body;
 
     user.username = username || user.username;
-=======
     const { username, image, email, password, phoneNumbers, addresses, age } =
       req.body;
 
     user.username = username || user.username;
     user.image = image || user.image;
->>>>>>> main
     user.email = email || user.email;
     user.phoneNumbers = phoneNumbers || user.phoneNumbers;
     user.addresses = addresses || user.addresses;
@@ -44,11 +41,8 @@ export const EditUserDataById = async (req, res, next) => {
     await user.save();
     res.status(200).json({
       message: "User updated successfully",
-<<<<<<< HEAD
       user: updatedUser,
-=======
       user: user,
->>>>>>> main
     });
   } catch (error) {
     next(error);

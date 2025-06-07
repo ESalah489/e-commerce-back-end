@@ -1,7 +1,7 @@
 import express from "express";
 
-import { register, login } from "../Auth/auth.controller.js";
-import validate from "../../middleware/validationMiddleware.js";
+// import { register, login } from "../Auth/auth.controller.js";
+// import validate from "../../middleware/validationMiddleware.js";
 
 import { register, login, logout } from "../Auth/auth.controller.js";
 import validate from "../../middleware/validationMiddleware.js";
