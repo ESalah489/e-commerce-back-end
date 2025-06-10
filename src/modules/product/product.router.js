@@ -11,5 +11,5 @@ router.get("/:id",productController.getProductById)
 router.post("/",validate(validateProduct),productController.createProduct)
 router.put("/:id",validate(validateProduct),productController.editProductById)
 router.delete("/:id",productController.deletetProductById)
-router.get("/:id",productController.getRelatedProducts)
+router.get("/:id/related", productController.getRelatedProducts)
 export default router;
