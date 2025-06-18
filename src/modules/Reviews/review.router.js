@@ -6,7 +6,7 @@ const router=express.Router();
 
 
 
-router.get("/",reviewController.getAllReviewsofAProduct)
+router.get("/product/:productId",reviewController.getAllReviewsofAProduct)
 router.get("/:id",reviewController.getReviewById)
 router.post("/",validate(validateReview),reviewController.createReview)
 router.put("/:id",validate(validateReview),reviewController.editReviewById)
