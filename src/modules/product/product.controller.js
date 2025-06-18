@@ -37,7 +37,7 @@ export const getAllProducts = async (req, res, next) => {
       sortBy,
       order = "asc",
       page = 1,
-      limit = 3,
+      limit = 6,
     } = req.query;
 
     if (brand) {
