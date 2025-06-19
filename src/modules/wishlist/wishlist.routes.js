@@ -17,8 +17,8 @@ router.post("/", isAuth, validate(toggleWishlistSchema), toggleWishlist);
 
 router.get("/", isAuth, getWishlist);
 
-router.delete(
-  "/:productId",
+router.post(
+  "/remove",
   isAuth,
   validate(removeFromWishlistSchema),
   removeFromWishlist
