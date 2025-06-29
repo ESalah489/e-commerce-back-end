@@ -1,24 +1,10 @@
-// import express from "express";
-// const router = express.Router();
-// import validate from "../../middleware/validationMiddleware.js";
-// import { orderValidationSchema } from "../../modules/Order/order.validation.js";
-
-// router.post(
-//   "/checkout",
-//   isAuth,
-//   validate(orderValidationSchema),
-//   CkeckoutOrder
-// );
-
-// export default router;
 import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import Order from "../../../DB/models/checkout-model.js";
-import { orderValidationSchema } from "./order.validation.js";
-import { placeOrder } from "./order-controller.js";
+import { createOrderBodySchema, createCheckoutSessionSchema } from "./order.validation.js";
+import { placeOrder, GetAllOrders } from "../../modules/Order/order-controller.js";
 import { isAuth } from "../../middleware/isauthMiddleware.js";
-import { GetAllOrders } from "../../modules/Order/order-controller.js";
 
 dotenv.config();
 
@@ -33,33 +19,15 @@ const allowedStatuses = [
   "cancelled",
   "completed",
 ];
-router.get("/orders", isAuth, GetAllOrders);
-
-router.get("/", (req, res) => {
-  res.json({ message: "✅ Orders route is working" });
-});
-
-router.get("/all", async (req, res, next) => {
-  try {
-    const orders = await Order.find()
-      .populate("user")
-      .populate("items.product");
-
-    res.status(200).json({ orders });
-  } catch (err) {
-    next(err);
-  }
-});
 
 router.post("/", async (req, res, next) => {
   try {
-    const { error } = orderValidationSchema.validate(req.body);
+    const { error } = createOrderBodySchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    const { user, items, shippingAddress, phoneNumbers, totalAmount } =
-      req.body;
+    const { user, items, shippingAddress, phoneNumbers, totalAmount } = req.body;
 
     const newOrder = new Order({
       user,
@@ -86,12 +54,24 @@ router.post("/checkout", isAuth, placeOrder);
 
 router.post("/create-checkout-session", isAuth, async (req, res, next) => {
   try {
-    const { user, items, shippingAddress, phoneNumbers, totalAmount } =
-      req.body;
+    console.log("📝 Received payload:", req.body);
+    console.log("👤 User ID:", req.user?.id);
 
-    // ✅ أنشئ الطلب مبدئيًا وحفظه في قاعدة البيانات
+    const { error } = createCheckoutSessionSchema.validate(req.body);
+    if (error) {
+      console.error("❌ Validation error:", error.details);
+      return res.status(400).json({ 
+        error: error.details[0].message,
+        details: error.details 
+      });
+    }
+
+    const { items, shippingAddress, phoneNumbers, totalAmount } = req.body;
+
     const newOrder = new Order({
-      user,
+      user: req.user.id,
+      username: req.user.username || '',
+      email: req.user.email || '',
       items,
       shippingAddress,
       phoneNumbers,
@@ -101,127 +81,97 @@ router.post("/create-checkout-session", isAuth, async (req, res, next) => {
     });
 
     await newOrder.save();
+    console.log("💾 Order saved:", newOrder._id);
 
-    // ✅ الآن نقدر نستخدم newOrder._id و user
+    const lineItems = items.map((item) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: `Product ${item.product}`,
+        },
+        unit_amount: Math.round(item.price * 100),
+      },
+      quantity: item.quantity,
+    }));
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
+      line_items: lineItems,
       mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: { name: "Total Order" },
-            unit_amount: Math.round(totalAmount * 100), // بالدولار → إلى سنت
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.BASE_URL}/complete?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.BASE_URL}/cancel`,
+      success_url: `${process.env.FRONTEND_URL}/complete?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:`${process.env.FRONTEND_URL}/cancel`,
       metadata: {
         orderId: newOrder._id.toString(),
-        userId: user,
+        userId: req.user.id,
       },
+      customer_email: req.user.email,
     });
 
-    res.status(200).json({ url: session.url });
+    console.log("✅ Stripe session created:", session.id);
+
+    res.status(200).json({
+      success: true,
+      sessionId: session.id,
+      url: session.url,
+      orderId: newOrder._id,
+    });
+
   } catch (error) {
-    next(error);
+    console.error("❌ Stripe session error:", error);
+    res.status(500).json({
+      error: "Failed to create checkout session",
+      details: process.env.NODE_ENV === "development" ? error.message : "Internal server error"
+    });
   }
 });
 
-router.get("/complete", (req, res) => {
-  res.send("Payment successful!");
-});
-
-router.get("/cancel", (req, res) => {
-  res.send("Payment canceled.");
-});
-
-router.patch("/:id/status", async (req, res, next) => {
+router.post("/verify-payment", async (req, res) => {
   try {
-    const { status } = req.body;
+    const { sessionId } = req.body;
 
-    if (!status || !allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        error: `Invalid status. Allowed statuses: ${allowedStatuses.join(
-          ", "
-        )}`,
+    if (!sessionId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Session ID is required" 
       });
     }
 
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ error: "Order not found" });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    order.status.push({ step: status, time: new Date() });
-
-    order.deliveryStatus = status;
-
-    await order.save();
-
-    res.json({
-      message: `Order status updated to '${status}'`,
-      status: order.status,
-      deliveryStatus: order.deliveryStatus,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    console.log("💥 webhook hit");
-
-    const sig = req.headers["stripe-signature"];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-    } catch (err) {
-      console.error("Webhook signature error:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      const userId = session.metadata.userId;
+    if (session.payment_status === "paid") {
       const orderId = session.metadata.orderId;
 
-      // ✅ Check if order already exists
-      const existingOrder = await Order.findById(orderId);
-      if (existingOrder && existingOrder.deliveryStatus !== "pending") {
-        console.log("⚠️ Order already processed via Webhook");
-        return res.status(200).json({ received: true });
-      }
+      await Order.findByIdAndUpdate(orderId, { 
+        deliveryStatus: "completed",
+        stripeSessionId: sessionId,
+        paidAt: new Date(),
+      });
 
-      // ✅ Update existing order status (if created previously)
-      if (existingOrder) {
-        existingOrder.status.push({ step: "paid", time: new Date() });
-        existingOrder.deliveryStatus = "processing";
-        await existingOrder.save();
-        console.log("✅ Existing order updated via webhook");
-      } else {
-        // ✅ Or create a new order if not found
-        const newOrder = new Order({
-          user: userId,
-          items: [], // optionally add items
-          shippingAddress: {},
-          phoneNumbers: [],
-          totalAmount: session.amount_total / 100,
-          status: [{ step: "paid", time: new Date() }],
-          deliveryStatus: "processing",
-        });
-        await newOrder.save();
-        console.log("✅ New order saved from webhook");
-      }
+      res.json({
+        success: true,
+        message: "Payment verified successfully",
+        session: {
+          id: session.id,
+          payment_status: session.payment_status,
+          amount_total: session.amount_total,
+          currency: session.currency,
+        },
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Payment not completed",
+        payment_status: session.payment_status,
+      });
     }
-
-    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error("Payment verification error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify payment",
+      error: error.message,
+    });
   }
-);
+});
 
 export default router;

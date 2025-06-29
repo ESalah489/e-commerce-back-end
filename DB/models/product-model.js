@@ -13,7 +13,7 @@ const productSchema = new Schema({
     required: [true, "Product description is required"],
     trim: true,
     minlength: [5, "Description must be at least 5 characters"],
-    maxlength: [350, "Description must not exceed 150 characters"],
+    maxlength: [350, "Description must not exceed 350 characters"],
   },
   price: {
     type: Number,
@@ -26,6 +26,11 @@ const productSchema = new Schema({
     trim: true,
     minlength: [2, "Brand must be at least 2 characters"],
     maxlength: [30, "Brand must not exceed 30 characters"],
+  },
+  category: {
+    type: String,
+    trim: true,
+    maxlength: [50, "Category must not exceed 50 characters"],
   },
   stock: {
     type: Number,
@@ -53,10 +58,38 @@ const productSchema = new Schema({
       min: [0, "Rating count can't be negative"],
     },
   },
+  tags: {
+    type: [String],
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
+
 productSchema.index({ title: 1, brand: 1 }, { unique: true });
+productSchema.index({ title: "text", description: "text", brand: "text" });
+productSchema.index({ brand: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ "ratings.average": 1 });
+productSchema.index({ stock: 1 });
+productSchema.index({ createdAt: -1 });
+
+productSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+productSchema.pre('findOneAndUpdate', function(next) {
+  this.set({ updatedAt: new Date() });
+  next();
+});
+
 export default mongoose.model("Product", productSchema);
+

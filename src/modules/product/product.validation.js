@@ -13,4 +13,5 @@ const productJoiSchema = Joi.object({
   }),
   createdAt: Joi.date().default(() => new Date()),
 });
+
 export default productJoiSchema;

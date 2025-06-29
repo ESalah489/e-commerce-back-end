@@ -1,4 +1,25 @@
 import review from "../../../DB/models/review-model.js";
+import product from "../../../DB/models/product-model.js";
+
+const updateProductAverageRating = async (productId) => {
+  const reviews = await review.find({ productId });
+
+  if (reviews.length === 0) {
+    await product.findByIdAndUpdate(productId, {
+      'ratings.average': 0,
+      'ratings.count': 0,
+    });
+    return;
+  }
+
+  const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const avg = Math.round((total / reviews.length) * 10) / 10;
+
+  await product.findByIdAndUpdate(productId, {
+    'ratings.average': avg,
+    'ratings.count': reviews.length,
+  });
+};
 
 export const createReview=async(req,res,next)=>{
     try{
@@ -12,6 +33,7 @@ export const createReview=async(req,res,next)=>{
             return next(error);
         }
         const newRview = await review.create(req.body);
+        await updateProductAverageRating(req.body.productId); 
             res
               .status(201)
               .json({ message: "Review created successfully", review: newRview });
@@ -62,6 +84,7 @@ export const editReviewById=async(req,res,next)=>{
             if (!editReview) {
               return res.status(404).json({ message: "This review is not found!!" });
             }
+            await updateProductAverageRating(req.body.productId); 
             res.status(201).json(editReview);
     }catch(err){
      next(err);
@@ -74,6 +97,7 @@ export const deleteReviewById=async(req,res,next)=>{
             if (!deleteReview) {
               return res.status(404).json({ message: "This review is not found!!" });
             }
+            await updateProductAverageRating(deleteReview.productId);
             res.status(201).json(deleteReview);
 
     }catch(err){
