@@ -108,7 +108,7 @@ export const GetAllOrders = async (req, res, next) => {
     const orders = await Order.find({ user: req.user.id })
       .sort({ orderedAt: -1 })
       .populate("items.product")
-      .select("-__v"); // Exclude version key
+      .select("-__v"); 
 
     console.log(`📦 Found ${orders.length} orders for user:, req.user.id`);
 
