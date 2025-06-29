@@ -19,6 +19,7 @@ const allowedStatuses = [
   "cancelled",
   "completed",
 ];
+router.get("/orders", isAuth, GetAllOrders);
 
 router.post("/", async (req, res, next) => {
   try {
